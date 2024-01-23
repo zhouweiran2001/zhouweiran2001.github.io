@@ -4,13 +4,19 @@
   
   
   <entry>
-    <title>Hello World</title>
-    <link href="/2024/01/23/hello-world/"/>
-    <url>/2024/01/23/hello-world/</url>
+    <title>lvm挂载磁盘</title>
+    <link href="/2024/01/23/lvm%E6%8C%82%E8%BD%BD%E7%A3%81%E7%9B%98/"/>
+    <url>/2024/01/23/lvm%E6%8C%82%E8%BD%BD%E7%A3%81%E7%9B%98/</url>
     
-    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    <content type="html"><![CDATA[<h1>Centos-LVM扩展磁盘</h1><h2>LVM术语关系</h2><p>PE：物理区域，PV中可以用于分配的最小存储单元，可以在创建PV的时候指定，如1M, 2M, 4M, 8M, 32M, 64M。组成同一VG中所有PV的PE大小都是相同的。</p><p>PV：物理卷，处于LVM最底层，可以是物理硬盘或者分区。</p><p>VG：卷组，建立在PV之上，可以含有一个到多个PV。</p><p>LV：逻辑卷，建立在VG之上，相当于原来分区的概念。不过大小可以动态改变。</p><p>之间的逻辑关系如下所示</p><h2>LVM挂载磁盘</h2>1.查看磁盘命令<p><code>fdisk -l</code></p><p>2.创建物理卷（PV），再创建卷组（VG），最后创建LV（逻辑卷），将LV格式化为指定文件系统后即可挂载使用。</p><p><code>pvcreate /dev/sdb</code> 创建PV &#x2F;dev&#x2F;sdb</p><p><code>pvs</code>  查看pv状态</p><p>3.创建卷组,将物理卷加入卷组，并指定卷组名</p><p><code>vgcreate  testvg  /dev/sdb</code>  testvg就是卷组名</p><p><code>vgs</code>  查看vg状态</p><p>4.基于卷组创建一个15G大小的逻辑卷（由于卷组可用&lt;16G），并指定逻辑卷名</p><p><code>lvcreate -n testlv -L 15G testvg</code></p><p><code>lvs</code>  查看lv状态</p><p>当创建好一个逻辑卷，可在&#x2F;dev目录下找到</p><p>5.为逻辑卷创建文件系统，此处选择xfs文件系统</p><p><code>mkfs.xfs /dev/testvg/testlv</code></p><p>6.将创建的文件系统挂载在指定目录即可使用</p><p><code>mount /dev/testvg/testlv /mnt</code></p><h2>拉伸LVM，扩充磁盘空间（在现有逻辑卷上增加其容量）</h2>1.新增的硬盘先格式化成pv，之后拉伸vg，可以利用lvs来看要扩容的磁盘在那个vg下，拉伸对应vg即可<p><code>vgextend centos /dev/sdc</code></p><p>2.拉伸lv，lvs查看对应lv，路径即&#x2F;dev&#x2F;vg名&#x2F;lv名</p><p><code>lvextend -L +9G /dev/centos/root</code></p><p>3.利用xfs_growfs 来格式化</p><p><code>xfs_growfs /dev/centos/root</code></p><p>4.查看扩容成功<br><code>df -Th</code></p>]]></content>
     
     
+    
+    <tags>
+      
+      <tag>-运维</tag>
+      
+    </tags>
     
   </entry>
   
